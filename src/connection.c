@@ -1480,7 +1480,7 @@ void connection_thread_shutdown ()
 }
 
 
-static int _check_pass_http(http_parser_t *parser, 
+static int _check_pass_http(http_parser_t *parser,
         const char *correctuser, const char *correctpass)
 {
     /* This will look something like "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" */
@@ -1563,7 +1563,7 @@ int connection_check_admin_pass(http_parser_t *parser)
     protocol = httpp_getvar (parser, HTTPP_VAR_PROTOCOL);
     if (protocol && strcmp (protocol, "ICY") == 0)
         ret = _check_pass_icy (parser, pass);
-    else 
+    else
         ret = _check_pass_http (parser, user, pass);
     config_release_config();
     return ret;
@@ -1628,17 +1628,14 @@ static void _check_for_x_forwarded_for(ice_config_t *config, client_t *client)
         if (hdr == NULL) break;
         while (xforward)
         {
-            if (strcmp (xforward->ip, client->connection.ip) == 0)
-            {
-                int len = strcspn (hdr, ",") + 1;
-                char *ip = malloc (len);
+            int len = strcspn (hdr, ",") + 1;
+            char *ip = malloc (len);
 
-                snprintf (ip, len, "%s",  hdr);
-                free (client->connection.ip);
-                client->connection.ip = ip;
-                DEBUG2 ("x-forward match for %s, using %s instead", xforward->ip, ip);
-                break;
-            }
+            snprintf (ip, len, "%s",  hdr);
+            free (client->connection.ip);
+            client->connection.ip = ip;
+            DEBUG2 ("x-forward match for %s, using %s instead", xforward->ip, ip);
+            break;
             xforward = xforward->next;
         }
     } while(0);
@@ -1657,7 +1654,7 @@ static int _handle_source_request (client_t *client)
     _check_for_x_forwarded_for(config, client);
     config_release_config();
     client->flags &= ~CLIENT_KEEPALIVE;
-    
+
     if (uri[0] != '/')
     {
         WARN0 ("source mountpoint not starting with /");
@@ -1701,7 +1698,7 @@ static void check_for_filtering (ice_config_t *config, client_t *client, char *u
     char *extension = strrchr (uri, '.');
     const char *type = httpp_get_query_param (client->parser, "type");
 
-    if ((extension && strcmp (extension+1, "flv") == 0) || 
+    if ((extension && strcmp (extension+1, "flv") == 0) ||
         (type && (strcmp (type, ".flv") == 0 || strcmp (type, ".fla") == 0)))
     {
         client->flags |= CLIENT_WANTS_FLV;
@@ -1756,7 +1753,7 @@ static int _handle_get_request (client_t *client)
     /* there are several types of HTTP GET clients
     ** media clients, which are looking for a source (eg, URI = /stream.ogg)
     ** stats clients, which are looking for /admin/stats.xml
-    ** and directory server authorizers, which are looking for /GUID-xxxxxxxx 
+    ** and directory server authorizers, which are looking for /GUID-xxxxxxxx
     ** (where xxxxxx is the GUID in question) - this isn't implemented yet.
     ** we need to handle the latter two before the former, as the latter two
     ** aren't subject to the limits.
@@ -1798,7 +1795,7 @@ static int _handle_get_request (client_t *client)
 }
 
 
-/* close any open listening sockets 
+/* close any open listening sockets
  */
 void connection_listen_sockets_close (ice_config_t *config, int all_sockets)
 {
@@ -1870,7 +1867,7 @@ int connection_setup_sockets (ice_config_t *config)
     arr_size = count = global.server_sockets;
     if (sockets_setup == 1)
     {
-        // in case of changowner, run through the first time as root, but reject the second run through as that will 
+        // in case of changowner, run through the first time as root, but reject the second run through as that will
         // be as a user (initial startup of listening thread). after that it's fine.
         sockets_setup--;
         global_unlock();
