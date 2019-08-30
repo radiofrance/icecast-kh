@@ -6,6 +6,7 @@ SUBDIRS = images
 webdir = $(pkgdatadir)/web
 dist_web_DATA = status.xsl \
                 status2.xsl \
+                status-json.xsl \
                 style.css \
                 auth.xsl \
                 server_version.xsl \
@@ -14,4 +15,5 @@ dist_web_DATA = status.xsl \
                 statusbar.html \
                 admin.html \
                 index.html \
+                xml2json.xslt \
                 favicon.ico
