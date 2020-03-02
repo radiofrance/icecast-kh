@@ -359,7 +359,7 @@ int client_send_options(client_t *client)
             "HTTP/1.1 200 OK\r\n"
             "Connection: Keep-alive\r\n"
             "Access-Control-Allow-Origin: *\r\n"
-            "Access-Control-Allow-Headers: Origin, Accept, X-Requested-With, Content-Type\r\n"
+            "Access-Control-Allow-Headers: Origin, Accept, X-Requested-With, Content-Type, Icy-MetaData\r\n"
             "Access-Control-Allow-Methods: GET, OPTIONS, HEAD, STATS\r\n\r\n");
     client->respcode = 200;
     client->refbuf->len = strlen (client->refbuf->data);
@@ -905,7 +905,7 @@ static void *log_commit_thread (void *arg)
     while (1)
     {
         int ret = util_timed_wait_for_fd (logger_fd[0], 5000);
-        if (ret == 0) continue;
+        if (ret == 0 && global.running == ICE_RUNNING) continue;
         if (ret > 0)
         {
             char cm[80];
@@ -918,7 +918,7 @@ static void *log_commit_thread (void *arg)
             }
         }
         int err = 0;
-        if (ret < 0 && sock_recoverable ((err = sock_error())))
+        if (ret < 0 && sock_recoverable ((err = sock_error())) && global.running == ICE_RUNNING)
             continue;
         sock_close (logger_fd[0]);
         if (worker_count)
