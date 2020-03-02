@@ -253,7 +253,9 @@ void connection_initialize(void)
     connection_running = 0;
 #ifdef HAVE_OPENSSL
     ssl_ctx = NULL;
+#if OPENSSL_API_COMPAT < 0x10100000L
     SSL_load_error_strings();                /* readable error messages */
+#endif
     SSL_library_init();                      /* initialize library */
     ssl_mutexes = malloc(CRYPTO_num_locks() * sizeof(mutex_t));
     if (ssl_mutexes)
@@ -281,6 +283,9 @@ void connection_shutdown(void)
     CRYPTO_set_id_callback(NULL);
 #endif
     CRYPTO_set_locking_callback(NULL);
+#if OPENSSL_API_COMPAT < 0x10100000L
+    ERR_free_strings ();
+#endif
     if (ssl_mutexes)
     {
         int i;
@@ -479,6 +484,19 @@ static void get_ssl_certificate (ice_config_t *config)
 }
 #endif /* HAVE_OPENSSL */
 
+int connection_unreadable (connection_t *con)
+{
+    if (((++con->readchk) & 15) == 15)
+    {
+        int r = sock_active (con->sock);
+        if (r == 0)
+        {
+            con->error = 1;
+            return -1;
+        }
+    }
+    return 0;
+}
 
 /* handlers (default) for reading and writing a connection_t, no encrpytion
  * used just straight access to the socket
@@ -495,15 +513,8 @@ int connection_read (connection_t *con, void *buf, size_t len)
 
 int connection_send (connection_t *con, const void *buf, size_t len)
 {
-    if (((++con->readchk) & 7) == 7)
-    {
-        int r = sock_active (con->sock);
-        if (r == 0)
-        {
-            con->error = 1;
-            return -1;
-        }
-    }
+    if (connection_unreadable (con))
+        return -1;
     int bytes = sock_write_bytes (con->sock, buf, len);
     if (bytes < 0)
     {
@@ -606,15 +617,8 @@ int connection_bufs_send (connection_t *con, struct connection_bufs *vectors, in
     {
         if (not_ssl_connection (con))
         {
-            if (((++con->readchk) & 7) == 7)
-            {
-                int r = sock_active (con->sock);
-                if (r == 0)
-                {
-                    con->error = 1;
-                    return -1;
-                }
-            }
+            if (connection_unreadable (con))
+                return -1;
             ret = sock_writev (con->sock, p, vectors->count - i);
             if (ret < 0 && !sock_recoverable (sock_error()))
                 con->error = 1;
